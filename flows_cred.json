@@ -1,3 +1,6 @@
 {
-    "$": "eed7253686bcb9e54f5db60ad1177323NI9W2AIGSan6e43eHEJvnizwMMvSScWfNFrCptjrQNH1ZBA1mDfd+Cdw0d72xDFCVE36aGHvU68FXVTY3n/NT5e411K0hoPdTTH3"
+    "79250bf3.365cc4": {
+        "user": "$(MQTTUSERNAME)",
+        "password": "$(MQTTPASSWORD)"
+    }
 }

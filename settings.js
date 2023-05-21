@@ -20,7 +20,7 @@
 
 module.exports = {
     // the tcp port that the Node-RED web server is listening on
-    uiPort: process.env.PORT || 61880,
+    uiPort: process.env.NODEREDPORT,
 
     // By default, the Node-RED UI accepts connections on all IPv4 interfaces.
     // The following property can be used to listen on a specific interface. For
@@ -72,7 +72,7 @@ module.exports = {
     // Note: once you set this property, do not change it - doing so will prevent
     // node-red from being able to decrypt your existing credentials and they will be
     // lost.
-    credentialSecret: process.env.NODEREDCONFIGSECRET,
+    credentialSecret: false,
 
     // By default, all user data is stored in the Node-RED install directory. To
     // use a different location, the following property can be used
@@ -118,7 +118,7 @@ module.exports = {
         type: "credentials",
         users: [{
             username: "admin",
-            password: "$2a$08$KaclKnSDZ7.pGtci1ZSOIep/Dqu582RURal12L7kbJ1bnv/SYPNFq",
+            password: process.env.NODEREDPASSWORD,
             permissions: "*"
         }]
     },
@@ -232,6 +232,66 @@ module.exports = {
             metrics: false,
             // Whether or not to include audit events in the log output
             audit: false
+        }
+    },
+    editorTheme: {
+        /** The following property can be used to set a custom theme for the editor.
+         * See https://github.com/node-red-contrib-themes/theme-collection for
+         * a collection of themes to chose from.
+         */
+        //theme: "",
+
+        /** To disable the 'Welcome to Node-RED' tour that is displayed the first
+         * time you access the editor for each release of Node-RED, set this to false
+         */
+        tours: false,
+        page: {
+            title: process.env.NODEREDLABEL
+        },
+        header: {
+            title: process.env.NODEREDLABEL
+         },
+    
+
+        palette: {
+            /** The following property can be used to order the categories in the editor
+             * palette. If a node's category is not in the list, the category will get
+             * added to the end of the palette.
+             * If not set, the following default order is used:
+             */
+            categories: ['common', 'function', 'network', 'sequence', 'parser', 'storage','subflows'],
+        },
+
+        projects: {
+            /** To enable the Projects feature, set this value to true */
+            enabled: false,
+            workflow: {
+                /** Set the default projects workflow mode.
+                 *  - manual - you must manually commit changes
+                 *  - auto - changes are automatically committed
+                 * This can be overridden per-user from the 'Git config'
+                 * section of 'User Settings' within the editor
+                 */
+                mode: "manual"
+            }
+        },
+        codeEditor: 
+        {
+            lib: "monaco",
+            options: 
+            {
+                theme: "vs",
+                formatOnType: false,
+                formatOnPaste: false,
+                useTabStops: true,
+                colorDecorators: true,
+                fontSize: 14,
+                "bracketPairColorization.enabled": true,
+                minimap: 
+                {
+                  enabled: false
+                }
+            }
         }
     }
 }
