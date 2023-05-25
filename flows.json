@@ -147,15 +147,19 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Save tray config in Memory",
-        "func": "let tray = msg.payload;\nflow.set('tray', msg.payload);\nlet blinkybusCubes = [];\nlet blinkybusSettingCubes = [];\nlet keys = Object.keys(msg.payload)\nfor (let ikey  in keys)\n{\n    if (msg.payload[keys[ikey]].hasOwnProperty('type'))\n    {\n        if (msg.payload[keys[ikey]].hasOwnProperty('blinkybus')) \n        {\n            blinkybusCubes.push(keys[ikey]);\n            if (msg.payload[keys[ikey]].action == \"setting\") \n            {\n                blinkybusSettingCubes.push(keys[ikey]);\n            }\n        }\n    }\n}\nflow.set('blinkybusCubes', blinkybusCubes);\nflow.set('blinkybusSettingCubes', blinkybusSettingCubes);\nreturn null;\n",
-        "outputs": 0,
+        "func": "let tray = msg.payload;\ntray.trayControl.value = 0;\nflow.set('tray', msg.payload);\nlet blinkybusCubes = [];\nlet blinkybusSettingCubes = [];\nlet keys = Object.keys(msg.payload)\nfor (let ikey  in keys)\n{\n    if (msg.payload[keys[ikey]].hasOwnProperty('type'))\n    {\n        if (msg.payload[keys[ikey]].hasOwnProperty('blinkybus')) \n        {\n            blinkybusCubes.push(keys[ikey]);\n            if (msg.payload[keys[ikey]].action == \"setting\") \n            {\n                blinkybusSettingCubes.push(keys[ikey]);\n            }\n        }\n    }\n}\nflow.set('blinkybusCubes', blinkybusCubes);\nflow.set('blinkybusSettingCubes', blinkybusSettingCubes);\nreturn {topic: 'setting', payload:{'cube':'trayControl', value:0}};\n",
+        "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 900,
-        "y": 360,
-        "wires": []
+        "y": 400,
+        "wires": [
+            [
+                "e6028ca70b6042d8"
+            ]
+        ]
     },
     {
         "id": "6a3a1d38244800c1",
@@ -260,7 +264,7 @@
                 "b4c6e205db41e3e1"
             ],
             [
-                "719cafd457722095"
+                "4cedc086c72eda01"
             ],
             [
                 "b3fee75bbe3e5d31"
@@ -294,13 +298,13 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Publish tray",
-        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nvar newMsg = \n{\n    topic: flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading',\n    payload: JSON.stringify(tray)\n};\nreturn  newMsg;  \n",
+        "func": "if (msg.topic == 'pause')\n{\n    context.set('pause',msg.payload);\n    return null;\n}\nif (context.get('pause')) return null;\nif (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nvar newMsg = \n{\n    topic: flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading',\n    payload: JSON.stringify(tray)\n};\nreturn  newMsg;  \n",
         "outputs": 1,
         "noerr": 0,
-        "initialize": "",
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\ncontext.set('pause', false);",
         "finalize": "",
         "libs": [],
-        "x": 1230,
+        "x": 1290,
         "y": 300,
         "wires": [
             [
@@ -313,17 +317,17 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Save config file",
-        "func": "let cubeAlarm = flow.get('tray')[msg.payload.cube].alarm;\ncubeAlarm.limits.lolo = msg.payload.limits.lolo;\ncubeAlarm.limits.low  = msg.payload.limits.low;\ncubeAlarm.limits.high = msg.payload.limits.high;\ncubeAlarm.limits.hihi = msg.payload.limits.hihi;\ncubeAlarm.notify.name = msg.payload.notify.name;\ncubeAlarm.notify.number = msg.payload.notify.number;\nreturn {topic:'trayConfigCompleted', payload:true};",
+        "func": "let cubeAlarm = flow.get('tray')[msg.payload.cube].alarm;\ncubeAlarm.limits.lolo = msg.payload.limits.lolo;\ncubeAlarm.limits.low  = msg.payload.limits.low;\ncubeAlarm.limits.high = msg.payload.limits.high;\ncubeAlarm.limits.hihi = msg.payload.limits.hihi;\ncubeAlarm.notify.name = msg.payload.notify.name;\ncubeAlarm.notify.number = msg.payload.notify.number;\nreturn {topic:'newData', payload:true};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 860,
-        "y": 320,
+        "y": 360,
         "wires": [
             [
-                "719cafd457722095"
+                "8f466a48843f0a7f"
             ]
         ]
     },
@@ -445,8 +449,8 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Create Setting",
-        "func": "let tray = flow.get('tray');\nif (tray == null) return [null,null]\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\nlet blinkyBusSettingMsg = \n{\n    topic : msg.topic, \n    payload : { value: 0,  'address': -1  } \n}\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg, null];\n}\n\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [null, { topic: 'settingDone', payload: true }];\n\n",
-        "outputs": 2,
+        "func": "let blinkyBusSettingMsg = null;\nlet normalSettingMsg = null;\nlet trayControlMessage = null;\nlet tray = flow.get('tray');\nif (tray == null) return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg = \n    {\n        topic : msg.topic, \n        payload : { value: 0,  'address': -1  } \n    }\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n}\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    case 'trayControl':\n        switch(msg.payload.value)\n        {\n            case 0:\n                tray.trayControl.value = 0;\n                break;\n            case 1:\n                tray.trayControl.value = 1;\n                break;\n            case 2:\n                if (tray.trayControl.value > 0)\n                {\n                    tray.trayControl.value = 2;\n                }\n                break;\n            default:\n                tray.trayControl.value = 0;\n                break;\n        }\n        normalSettingMsg = { topic: 'newData', payload: true };\n        trayControlMessage = { topic: 'trayControl', payload: tray.trayControl.value };\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n\n",
+        "outputs": 3,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
@@ -458,7 +462,10 @@
                 "8ae00ce2e8187ccd"
             ],
             [
-                "719cafd457722095"
+                "71df6ca08438be25"
+            ],
+            [
+                "6c29d83d29cb0f0b"
             ]
         ]
     },
@@ -477,7 +484,7 @@
         "y": 480,
         "wires": [
             [
-                "719cafd457722095"
+                "bd59ed153526b94a"
             ]
         ]
     },
@@ -571,7 +578,7 @@
         "correl": "",
         "expiry": "",
         "broker": "79250bf3.365cc4",
-        "x": 1410,
+        "x": 1470,
         "y": 300,
         "wires": []
     },
@@ -939,8 +946,339 @@
         "links": [
             "f39fb963c816d17d"
         ],
-        "x": 1005,
-        "y": 220,
+        "x": 1075,
+        "y": 200,
         "wires": []
+    },
+    {
+        "id": "6c29d83d29cb0f0b",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "trayControl Out",
+        "mode": "link",
+        "links": [
+            "f5153c8898e1a608"
+        ],
+        "x": 1075,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "f5153c8898e1a608",
+        "type": "link in",
+        "z": "b438688e0b293257",
+        "name": "trayControl In",
+        "links": [
+            "6c29d83d29cb0f0b"
+        ],
+        "x": 635,
+        "y": 920,
+        "wires": [
+            [
+                "deafd5da1e8f46c9"
+            ]
+        ]
+    },
+    {
+        "id": "9fbf97ecc4d18acc",
+        "type": "switch",
+        "z": "b438688e0b293257",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 890,
+        "y": 920,
+        "wires": [
+            [
+                "4a0a885762d17331"
+            ],
+            [
+                "0f253bd93a3c0393"
+            ],
+            [
+                "441ab0c24a72693f"
+            ]
+        ]
+    },
+    {
+        "id": "deafd5da1e8f46c9",
+        "type": "delay",
+        "z": "b438688e0b293257",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "1",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 740,
+        "y": 920,
+        "wires": [
+            [
+                "9fbf97ecc4d18acc"
+            ]
+        ]
+    },
+    {
+        "id": "4a0a885762d17331",
+        "type": "function",
+        "z": "b438688e0b293257",
+        "name": "Resume Publish",
+        "func": "return {topic:'pause',payload:false};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1080,
+        "y": 860,
+        "wires": [
+            [
+                "974629da19a525ea"
+            ]
+        ]
+    },
+    {
+        "id": "0f253bd93a3c0393",
+        "type": "function",
+        "z": "b438688e0b293257",
+        "name": "Stop Publish",
+        "func": "return {topic:'pause',payload:true};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 900,
+        "wires": [
+            [
+                "974629da19a525ea"
+            ]
+        ]
+    },
+    {
+        "id": "974629da19a525ea",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "publish control out",
+        "mode": "link",
+        "links": [
+            "e90864c178e3c08e"
+        ],
+        "x": 1235,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "e90864c178e3c08e",
+        "type": "link in",
+        "z": "b438688e0b293257",
+        "name": "Publish Tray In",
+        "links": [
+            "bd59ed153526b94a",
+            "71df6ca08438be25",
+            "8f466a48843f0a7f",
+            "bd491678f8e24259",
+            "974629da19a525ea"
+        ],
+        "x": 1175,
+        "y": 300,
+        "wires": [
+            [
+                "719cafd457722095"
+            ]
+        ]
+    },
+    {
+        "id": "bd59ed153526b94a",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "alarm scan out",
+        "mode": "link",
+        "links": [
+            "e90864c178e3c08e"
+        ],
+        "x": 1175,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "71df6ca08438be25",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "create normal setting out",
+        "mode": "link",
+        "links": [
+            "e90864c178e3c08e"
+        ],
+        "x": 1075,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "8f466a48843f0a7f",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "save config out",
+        "mode": "link",
+        "links": [
+            "e90864c178e3c08e"
+        ],
+        "x": 1075,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "bd491678f8e24259",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "ping out",
+        "mode": "link",
+        "links": [
+            "e90864c178e3c08e"
+        ],
+        "x": 1075,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "4cedc086c72eda01",
+        "type": "function",
+        "z": "b438688e0b293257",
+        "name": "prep ping",
+        "func": "return {topic:'newData', payload:true};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 320,
+        "wires": [
+            [
+                "bd491678f8e24259"
+            ]
+        ]
+    },
+    {
+        "id": "441ab0c24a72693f",
+        "type": "function",
+        "z": "b438688e0b293257",
+        "name": "Reload tray",
+        "func": "return {topic:\"readTraydesc\",payload:env.get(\"MQTTSUBSCRIBE\")};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1070,
+        "y": 940,
+        "wires": [
+            [
+                "961510dc1e7a036a"
+            ]
+        ]
+    },
+    {
+        "id": "e6028ca70b6042d8",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "save tray config out",
+        "mode": "link",
+        "links": [
+            "21ead1f81b53e80b",
+            "51a78e555fb3b9d8"
+        ],
+        "x": 1075,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "21ead1f81b53e80b",
+        "type": "link in",
+        "z": "b438688e0b293257",
+        "name": "setting switch in",
+        "links": [
+            "e6028ca70b6042d8"
+        ],
+        "x": 605,
+        "y": 380,
+        "wires": [
+            [
+                "ffa001cd11b3750b"
+            ]
+        ]
+    },
+    {
+        "id": "961510dc1e7a036a",
+        "type": "link out",
+        "z": "b438688e0b293257",
+        "name": "reload trays out",
+        "mode": "link",
+        "links": [
+            "bad294b12342c555"
+        ],
+        "x": 1235,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "bad294b12342c555",
+        "type": "link in",
+        "z": "b438688e0b293257",
+        "name": "Init flow variables in",
+        "links": [
+            "961510dc1e7a036a"
+        ],
+        "x": 685,
+        "y": 140,
+        "wires": [
+            [
+                "33783d686e432aad"
+            ]
+        ]
+    },
+    {
+        "id": "51a78e555fb3b9d8",
+        "type": "link in",
+        "z": "b438688e0b293257",
+        "name": "Init Gizmo In",
+        "links": [
+            "e6028ca70b6042d8"
+        ],
+        "x": 785,
+        "y": 560,
+        "wires": [
+            [
+                "73f0429c49b37d63"
+            ]
+        ]
     }
 ]
