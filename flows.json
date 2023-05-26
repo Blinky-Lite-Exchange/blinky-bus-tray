@@ -147,7 +147,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Save tray config in Memory",
-        "func": "let tray = msg.payload;\ntray.trayControl.value = 0;\nflow.set('tray', msg.payload);\nlet blinkybusCubes = [];\nlet blinkybusSettingCubes = [];\nlet keys = Object.keys(msg.payload)\nfor (let ikey  in keys)\n{\n    if (msg.payload[keys[ikey]].hasOwnProperty('type'))\n    {\n        if (msg.payload[keys[ikey]].hasOwnProperty('blinkybus')) \n        {\n            blinkybusCubes.push(keys[ikey]);\n            if (msg.payload[keys[ikey]].action == \"setting\") \n            {\n                blinkybusSettingCubes.push(keys[ikey]);\n            }\n        }\n    }\n}\nflow.set('blinkybusCubes', blinkybusCubes);\nflow.set('blinkybusSettingCubes', blinkybusSettingCubes);\nreturn {topic: 'setting', payload:{'cube':'trayControl', value:0}};\n",
+        "func": "let tray = msg.payload;\nflow.set('tray', msg.payload);\nlet blinkybusCubes = [];\nlet blinkybusSettingCubes = [];\nlet keys = Object.keys(msg.payload)\nfor (let ikey  in keys)\n{\n    if (msg.payload[keys[ikey]].hasOwnProperty('type'))\n    {\n        if (msg.payload[keys[ikey]].hasOwnProperty('blinkybus')) \n        {\n            blinkybusCubes.push(keys[ikey]);\n            if (msg.payload[keys[ikey]].action == \"setting\") \n            {\n                blinkybusSettingCubes.push(keys[ikey]);\n            }\n        }\n    }\n}\nflow.set('blinkybusCubes', blinkybusCubes);\nflow.set('blinkybusSettingCubes', blinkybusSettingCubes);\ntray.trayControl.value = 0;\nreturn {topic: 'setting', payload:{'cube':'trayControl', value:tray.trayControl.value}};\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1075,7 +1075,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1090,
+        "x": 1070,
         "y": 900,
         "wires": [
             [
@@ -1213,8 +1213,7 @@
         "name": "save tray config out",
         "mode": "link",
         "links": [
-            "21ead1f81b53e80b",
-            "51a78e555fb3b9d8"
+            "21ead1f81b53e80b"
         ],
         "x": 1075,
         "y": 400,
@@ -1262,22 +1261,6 @@
         "wires": [
             [
                 "33783d686e432aad"
-            ]
-        ]
-    },
-    {
-        "id": "51a78e555fb3b9d8",
-        "type": "link in",
-        "z": "b438688e0b293257",
-        "name": "Init Gizmo In",
-        "links": [
-            "e6028ca70b6042d8"
-        ],
-        "x": 785,
-        "y": 560,
-        "wires": [
-            [
-                "73f0429c49b37d63"
             ]
         ]
     }
