@@ -298,10 +298,10 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Publish tray",
-        "func": "if (msg.topic == 'pause')\n{\n    context.set('pause',msg.payload);\n    return null;\n}\nif (context.get('pause')) return null;\nif (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nvar newMsg = \n{\n    topic: flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading',\n    payload: JSON.stringify(tray)\n};\nreturn  newMsg;  \n",
+        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nlet newMsg = null;\nlet newMsgTopic = flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading';\nswitch( tray.trayControl.value)\n{\n    case 0:\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    case -1:\n        tray.trayControl.value = 1;\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    default:\n        break;\n}\nreturn newMsg;\n",
         "outputs": 1,
         "noerr": 0,
-        "initialize": "// Code added here will be run once\n// whenever the node is started.\ncontext.set('pause', false);",
+        "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 1290,
@@ -449,7 +449,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Create Setting",
-        "func": "let blinkyBusSettingMsg = null;\nlet normalSettingMsg = null;\nlet trayControlMessage = null;\nlet tray = flow.get('tray');\nif (tray == null) return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg = \n    {\n        topic : msg.topic, \n        payload : { value: 0,  'address': -1  } \n    }\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n}\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    case 'trayControl':\n        switch(msg.payload.value)\n        {\n            case 0:\n                tray.trayControl.value = 0;\n                break;\n            case 1:\n                tray.trayControl.value = 1;\n                break;\n            case 2:\n                if (tray.trayControl.value > 0)\n                {\n                    tray.trayControl.value = 2;\n                }\n                break;\n            default:\n                tray.trayControl.value = 0;\n                break;\n        }\n        normalSettingMsg = { topic: 'newData', payload: true };\n        trayControlMessage = { topic: 'trayControl', payload: tray.trayControl.value };\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n\n",
+        "func": "let blinkyBusSettingMsg = null;\nlet normalSettingMsg = null;\nlet trayControlMessage = null;\nlet tray = flow.get('tray');\nif (tray == null) return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg = \n    {\n        topic : msg.topic, \n        payload : { value: 0,  'address': -1  } \n    }\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n}\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    case 'trayControl':\n        switch(msg.payload.value)\n        {\n            case 0:\n                tray.trayControl.value = 0;\n                break;\n            case 1:\n                tray.trayControl.value = -1;\n                break;\n            case 2:\n                if (tray.trayControl.value > 0)\n                {\n                    tray.trayControl.value = 2;\n                    let trayProps  = flow.get('trayProps');\n                    node.warn(\"Asking for tray from database\");\n                    trayControlMessage =\n                    {\n                        topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/echo',\n                        payload: JSON.stringify({ topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/setting/echo' })\n                    };\n                }\n                break;\n            default:\n                tray.trayControl.value = 0;\n                break;\n        }\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n\n",
         "outputs": 3,
         "noerr": 0,
         "initialize": "",
@@ -506,7 +506,7 @@
                 "a91ceff75d960313"
             ],
             [
-                "81831015c91a5f28"
+                "961510dc1e7a036a"
             ]
         ]
     },
@@ -969,132 +969,16 @@
         "z": "b438688e0b293257",
         "name": "trayControl In",
         "links": [
-            "6c29d83d29cb0f0b"
+            "6c29d83d29cb0f0b",
+            "961510dc1e7a036a"
         ],
-        "x": 635,
-        "y": 920,
+        "x": 1355,
+        "y": 240,
         "wires": [
             [
-                "deafd5da1e8f46c9"
+                "81831015c91a5f28"
             ]
         ]
-    },
-    {
-        "id": "9fbf97ecc4d18acc",
-        "type": "switch",
-        "z": "b438688e0b293257",
-        "name": "",
-        "property": "payload",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "0",
-                "vt": "num"
-            },
-            {
-                "t": "eq",
-                "v": "1",
-                "vt": "num"
-            },
-            {
-                "t": "eq",
-                "v": "2",
-                "vt": "num"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 3,
-        "x": 890,
-        "y": 920,
-        "wires": [
-            [
-                "4a0a885762d17331"
-            ],
-            [
-                "0f253bd93a3c0393"
-            ],
-            [
-                "441ab0c24a72693f"
-            ]
-        ]
-    },
-    {
-        "id": "deafd5da1e8f46c9",
-        "type": "delay",
-        "z": "b438688e0b293257",
-        "name": "",
-        "pauseType": "delay",
-        "timeout": "1",
-        "timeoutUnits": "seconds",
-        "rate": "1",
-        "nbRateUnits": "1",
-        "rateUnits": "second",
-        "randomFirst": "1",
-        "randomLast": "5",
-        "randomUnits": "seconds",
-        "drop": false,
-        "allowrate": false,
-        "outputs": 1,
-        "x": 740,
-        "y": 920,
-        "wires": [
-            [
-                "9fbf97ecc4d18acc"
-            ]
-        ]
-    },
-    {
-        "id": "4a0a885762d17331",
-        "type": "function",
-        "z": "b438688e0b293257",
-        "name": "Resume Publish",
-        "func": "return {topic:'pause',payload:false};",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1080,
-        "y": 860,
-        "wires": [
-            [
-                "974629da19a525ea"
-            ]
-        ]
-    },
-    {
-        "id": "0f253bd93a3c0393",
-        "type": "function",
-        "z": "b438688e0b293257",
-        "name": "Stop Publish",
-        "func": "return {topic:'pause',payload:true};",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1070,
-        "y": 900,
-        "wires": [
-            [
-                "974629da19a525ea"
-            ]
-        ]
-    },
-    {
-        "id": "974629da19a525ea",
-        "type": "link out",
-        "z": "b438688e0b293257",
-        "name": "publish control out",
-        "mode": "link",
-        "links": [
-            "e90864c178e3c08e"
-        ],
-        "x": 1235,
-        "y": 880,
-        "wires": []
     },
     {
         "id": "e90864c178e3c08e",
@@ -1188,25 +1072,6 @@
         ]
     },
     {
-        "id": "441ab0c24a72693f",
-        "type": "function",
-        "z": "b438688e0b293257",
-        "name": "Reload tray",
-        "func": "return {topic:\"readTraydesc\",payload:env.get(\"MQTTSUBSCRIBE\")};",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1070,
-        "y": 940,
-        "wires": [
-            [
-                "961510dc1e7a036a"
-            ]
-        ]
-    },
-    {
         "id": "e6028ca70b6042d8",
         "type": "link out",
         "z": "b438688e0b293257",
@@ -1242,26 +1107,10 @@
         "name": "reload trays out",
         "mode": "link",
         "links": [
-            "bad294b12342c555"
+            "f5153c8898e1a608"
         ],
-        "x": 1235,
-        "y": 940,
+        "x": 1305,
+        "y": 160,
         "wires": []
-    },
-    {
-        "id": "bad294b12342c555",
-        "type": "link in",
-        "z": "b438688e0b293257",
-        "name": "Init flow variables in",
-        "links": [
-            "961510dc1e7a036a"
-        ],
-        "x": 685,
-        "y": 140,
-        "wires": [
-            [
-                "33783d686e432aad"
-            ]
-        ]
     }
 ]
