@@ -100,7 +100,7 @@ module.exports = {
     // When httpAdminRoot is used to move the UI to a different root path, the
     // following property can be used to identify a directory of static content
     // that should be served at http://localhost:1880/.
-    httpStatic: 'html-static/',
+//    httpStatic: 'html-static/',
 
     // The maximum size of HTTP request that will be accepted by the runtime api.
     // Default: 5mb
@@ -118,7 +118,7 @@ module.exports = {
         type: "credentials",
         users: [{
             username: "admin",
-            password: process.env.NODEREDPASSWORD,
+            password: "$2a$12$u6lZPi3UFw3PfFBM4WhgIeynnuQUQT5HgmW03neCtgSkF8bUFWwz6",
             permissions: "*"
         }]
     },
@@ -234,6 +234,8 @@ module.exports = {
             audit: false
         }
     },
+    disableEditor: (process.env.ENABLE_NODERED_EDITOR === '0'),
+//    disableEditor: false,
     editorTheme: {
         /** The following property can be used to set a custom theme for the editor.
          * See https://github.com/node-red-contrib-themes/theme-collection for
