@@ -127,7 +127,7 @@
         "id": "a4f4c59daf894823",
         "type": "serial-port",
         "serialport": "$(SERIALPORT)",
-        "serialbaud": "9600",
+        "serialbaud": "115200",
         "databits": "8",
         "parity": "none",
         "stopbits": "1",

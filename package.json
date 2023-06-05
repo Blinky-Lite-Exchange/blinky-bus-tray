@@ -22,6 +22,6 @@
   "dependencies": {
     "node-red": "^3.0.2",
     "node-red-dashboard": "^3.4.0",
-    "node-red-node-serialport": "~1.0.3"
+    "node-red-node-serialport": "0.15.0"
   }
 }
