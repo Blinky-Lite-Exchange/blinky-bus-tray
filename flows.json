@@ -165,7 +165,7 @@
         "id": "6a3a1d38244800c1",
         "type": "inject",
         "z": "b438688e0b293257",
-        "name": "read Tray",
+        "name": "initFlow",
         "props": [
             {
                 "p": "payload"
@@ -178,11 +178,11 @@
         "repeat": "",
         "crontab": "",
         "once": true,
-        "onceDelay": "2",
-        "topic": "readTraydesc",
-        "payload": "MQTTSUBSCRIBE",
-        "payloadType": "env",
-        "x": 640,
+        "onceDelay": "1",
+        "topic": "initFlow",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
         "y": 100,
         "wires": [
             [
@@ -195,17 +195,18 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Init flow Variables",
-        "func": "var mqttSplit = msg.payload.split('/');\nvar trayProps = {\n    box         :   mqttSplit[0],\n    type        :   mqttSplit[1],\n    name        :   mqttSplit[2],\n};\nflow.set('trayProps',trayProps);\nflow.set('settingInProgress', false);\nflow.set('deviceInit',false);\nflow.set('tray', null);\nreturn {topic: \"getTrayProps\", payload: true};  \n",
+        "func": "var trayProps = {\n    box         :   env.get(\"BOX\"),\n    type        :   env.get(\"TRAYTYPE\"),\n    name        :   env.get(\"TRAYNAME\"),\n};\nflow.set(\"serialBufSize\",env.get(\"SERIALBUFSIZE\"));\nflow.set('trayProps',trayProps);\nflow.set('settingInProgress', false);\nflow.set('deviceInit',false);\nflow.set('tray', null);\nreturn {topic: \"getTrayProps\", payload: true};  \n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 830,
+        "x": 350,
         "y": 100,
         "wires": [
             [
-                "461b2f08f5e4f4ba"
+                "a1ac9e631b1c38ed",
+                "4d6715a3cd96c25c"
             ]
         ]
     },
@@ -279,7 +280,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Filter MQTT",
-        "func": "return {topic:msg.topic.split('/')[4], payload:msg.payload};",
+        "func": "return {topic:msg.topic.split('/')[5], payload:msg.payload};",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -298,7 +299,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Publish tray",
-        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nlet newMsg = null;\nlet newMsgTopic = flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading';\nswitch( tray.trayControl.value)\n{\n    case 0:\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    case -1:\n        tray.trayControl.value = 1;\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    default:\n        break;\n}\nreturn newMsg;\n",
+        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nlet newMsg = null;\nlet newMsgTopic = flow.get('trayProps').box + '/tray/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/reading';\nswitch( tray.trayControl.value)\n{\n    case 0:\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    case -1:\n        tray.trayControl.value = 1;\n        newMsg = {topic: newMsgTopic, payload: JSON.stringify(tray)};\n        break;\n    default:\n        break;\n}\nreturn newMsg;\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -430,7 +431,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Publish tray",
-        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nvar newMsg = \n{\n    topic: flow.get('trayProps').box + '/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/archive',\n    payload: JSON.stringify(tray)\n};\nreturn  newMsg;  \n",
+        "func": "if (!msg.payload) return null;\nvar tray = flow.get('tray');\nif (tray == null) return null;\nvar newMsg = \n{\n    topic: flow.get('trayProps').box + '/tray/' + flow.get('trayProps').type + '/' + flow.get('trayProps').name + '/archive',\n    payload: JSON.stringify(tray)\n};\nreturn  newMsg;  \n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -449,7 +450,7 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Create Setting",
-        "func": "let blinkyBusSettingMsg = null;\nlet normalSettingMsg = null;\nlet trayControlMessage = null;\nlet tray = flow.get('tray');\nif (tray == null) return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg = \n    {\n        topic : msg.topic, \n        payload : { value: 0,  'address': -1  } \n    }\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n}\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    case 'trayControl':\n        switch(msg.payload.value)\n        {\n            case 0:\n                tray.trayControl.value = 0;\n                break;\n            case 1:\n                tray.trayControl.value = -1;\n                break;\n            case 2:\n                if (tray.trayControl.value > 0)\n                {\n                    tray.trayControl.value = 2;\n                    let trayProps  = flow.get('trayProps');\n                    node.warn(\"Asking for tray from database\");\n                    trayControlMessage =\n                    {\n                        topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/echo',\n                        payload: JSON.stringify({ topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/setting/echo' })\n                    };\n                }\n                break;\n            default:\n                tray.trayControl.value = 0;\n                break;\n        }\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n\n",
+        "func": "let blinkyBusSettingMsg = null;\nlet normalSettingMsg = null;\nlet trayControlMessage = null;\nlet tray = flow.get('tray');\nif (tray == null) return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\nlet blinkybusSettingCubes = flow.get('blinkybusSettingCubes');\nlet icube = blinkybusSettingCubes.indexOf(msg.payload.cube);\n\nif (icube >= 0)\n{\n    blinkyBusSettingMsg = \n    {\n        topic : msg.topic, \n        payload : { value: 0,  'address': -1  } \n    }\n    blinkyBusSettingMsg.payload.address = tray[blinkybusSettingCubes[icube]].blinkybus.address;\n    blinkyBusSettingMsg.payload.value = Math.round(msg.payload.value * tray[blinkybusSettingCubes[icube]].blinkybus.scale);\n \n    flow.set('settingInProgress', true);\n    return [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n}\nswitch (msg.payload.cube) \n{\n    case 'alias':\n        tray.alias.value = msg.payload.value;\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    case 'trayControl':\n        switch(msg.payload.value)\n        {\n            case 0:\n                tray.trayControl.value = 0;\n                break;\n            case 1:\n                tray.trayControl.value = -1;\n                break;\n            case 2:\n                if (tray.trayControl.value > 0)\n                {\n                    tray.trayControl.value = 2;\n                    let trayProps  = flow.get('trayProps');\n                    node.warn(\"Asking for tray from database\");\n                    trayControlMessage =\n                    {\n                        topic: trayProps.box + '/tray/' + trayProps.type + '/' + trayProps.name + '/echo',\n                        payload: JSON.stringify({ topic: trayProps.box + '/tray/' + trayProps.type + '/' + trayProps.name + '/setting/echo' })\n                    };\n                }\n                break;\n            default:\n                tray.trayControl.value = 0;\n                break;\n        }\n        normalSettingMsg = { topic: 'newData', payload: true };\n       break;\n    default:\n        break;\n}\nflow.set('settingInProgress', false);\nreturn [blinkyBusSettingMsg,normalSettingMsg,trayControlMessage];\n\n",
         "outputs": 3,
         "noerr": 0,
         "initialize": "",
@@ -493,13 +494,13 @@
         "type": "function",
         "z": "b438688e0b293257",
         "name": "Request tray from Database",
-        "func": "let tray = flow.get('tray');\nif (tray != null) return [null,null];\nlet trayProps  = flow.get('trayProps');\nnode.warn(\"Asking for tray from database\");\nvar newMsg =\n{\n    topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/echo',\n    payload: JSON.stringify({ topic: trayProps.box + '/' + trayProps.type + '/' + trayProps.name + '/setting/echo' })\n};\nreturn [{ topic: \"getTrayProps\", payload: true }, newMsg];  \n",
+        "func": "let tray = flow.get('tray');\nif (tray != null) return [null,null];\nlet trayProps  = flow.get('trayProps');\nnode.warn(\"Asking for tray from database\");\nvar newMsg =\n{\n    topic: trayProps.box + '/tray/' + trayProps.type + '/' + trayProps.name + '/echo',\n    payload: JSON.stringify({ topic: trayProps.box + '/tray/' + trayProps.type + '/' + trayProps.name + '/setting/echo' })\n};\nreturn [{ topic: \"getTrayProps\", payload: true }, newMsg];  \n",
         "outputs": 2,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1120,
+        "x": 880,
         "y": 100,
         "wires": [
             [
@@ -527,7 +528,7 @@
         "drop": false,
         "allowrate": false,
         "outputs": 1,
-        "x": 1360,
+        "x": 1120,
         "y": 100,
         "wires": [
             [
@@ -544,7 +545,7 @@
         "links": [
             "226356ea922f47c6"
         ],
-        "x": 1465,
+        "x": 1225,
         "y": 40,
         "wires": []
     },
@@ -556,7 +557,7 @@
         "links": [
             "0d7a971d3b3d078d"
         ],
-        "x": 985,
+        "x": 745,
         "y": 40,
         "wires": [
             [
@@ -587,13 +588,13 @@
         "type": "mqtt in",
         "z": "b438688e0b293257",
         "name": "Subscribe Settings",
-        "topic": "$(MQTTSUBSCRIBE)",
+        "topic": "",
         "qos": "0",
         "datatype": "auto",
         "broker": "79250bf3.365cc4",
         "nl": false,
         "rap": false,
-        "inputs": 0,
+        "inputs": 1,
         "x": 170,
         "y": 300,
         "wires": [
@@ -653,50 +654,6 @@
         "x": 1540,
         "y": 620,
         "wires": []
-    },
-    {
-        "id": "32b59279c9964665",
-        "type": "function",
-        "z": "b438688e0b293257",
-        "name": "Save flow env variables",
-        "func": "global.set(msg.topic,msg.payload);\nreturn null;",
-        "outputs": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 370,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "2331adfe81d7b7f1",
-        "type": "inject",
-        "z": "b438688e0b293257",
-        "name": "serialBufSize",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "serialBufSize",
-        "payload": "SERIALBUFSIZE",
-        "payloadType": "env",
-        "x": 170,
-        "y": 100,
-        "wires": [
-            [
-                "32b59279c9964665"
-            ]
-        ]
     },
     {
         "id": "2c21f72a1646438b",
@@ -1109,8 +1066,52 @@
         "links": [
             "f5153c8898e1a608"
         ],
-        "x": 1305,
+        "x": 1065,
         "y": 160,
         "wires": []
+    },
+    {
+        "id": "a1ac9e631b1c38ed",
+        "type": "function",
+        "z": "b438688e0b293257",
+        "name": "MQTT subscribe topic",
+        "func": "let subscribeTopic = flow.get('trayProps').box + \"/tray/\" + flow.get('trayProps').type +'/' + flow.get('trayProps').name + \"/setting/#\";\nreturn {action:\"subscribe\",topic:subscribeTopic};",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 240,
+        "wires": [
+            [
+                "aeb11c4b0eca0c4a"
+            ]
+        ]
+    },
+    {
+        "id": "4d6715a3cd96c25c",
+        "type": "delay",
+        "z": "b438688e0b293257",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 580,
+        "y": 100,
+        "wires": [
+            [
+                "461b2f08f5e4f4ba"
+            ]
+        ]
     }
 ]
