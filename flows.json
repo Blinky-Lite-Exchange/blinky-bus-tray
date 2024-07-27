@@ -670,7 +670,7 @@
         "y": 460,
         "wires": [
             [
-                "7fa236abc9eb584a"
+                "6516f706eef59888"
             ]
         ]
     },
@@ -689,7 +689,7 @@
         "y": 540,
         "wires": [
             [
-                "7fa236abc9eb584a"
+                "6516f706eef59888"
             ]
         ]
     },
@@ -800,30 +800,6 @@
         "wires": [
             [
                 "ef8c2e4f95bfdb94"
-            ]
-        ]
-    },
-    {
-        "id": "7fa236abc9eb584a",
-        "type": "serial out",
-        "z": "b438688e0b293257",
-        "name": "BlinkyBus Out",
-        "serial": "a4f4c59daf894823",
-        "x": 390,
-        "y": 500,
-        "wires": []
-    },
-    {
-        "id": "2ce22ef16f24ed2c",
-        "type": "serial in",
-        "z": "b438688e0b293257",
-        "name": "BlinkyBus In",
-        "serial": "a4f4c59daf894823",
-        "x": 570,
-        "y": 500,
-        "wires": [
-            [
-                "cf88bab40c6dc9e9"
             ]
         ]
     },
@@ -1111,6 +1087,20 @@
         "wires": [
             [
                 "461b2f08f5e4f4ba"
+            ]
+        ]
+    },
+    {
+        "id": "6516f706eef59888",
+        "type": "serial request",
+        "z": "b438688e0b293257",
+        "name": "",
+        "serial": "a4f4c59daf894823",
+        "x": 510,
+        "y": 500,
+        "wires": [
+            [
+                "cf88bab40c6dc9e9"
             ]
         ]
     }
